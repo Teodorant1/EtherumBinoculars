@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -33,7 +34,7 @@ type api_Payload struct {
 }
 
 type balance struct {
-	Balance int `json:"balance"`
+	Balance string `json:"result"`
 }
 type period struct {
 	value     int
@@ -46,11 +47,15 @@ const apikey = "8SYNIAHH11X4UA7SGZI8JHICTTAZPZVJXE"
 type Fetcher struct{}
 
 // the first member of payload is the latest transaction and the last one is the first transaction
-func (Fetcher Fetcher) filterDates(timestamp int, payload api_Payload, currentbalance int, walletaddress string) int {
+func (Fetcher *Fetcher) filterDates(timestamp int, payload api_Payload, currentbalance int, walletaddress string) int {
 	//	fmt.Println(payload.Result[0].Timestamp)
 	//	fmt.Println(payload.Result[1].Timestamp)
+
+	//	currentbalance := &currentbalance2
+
 	presentDay := time.Now().Unix()
 	periods := []*period{}
+	fmt.Println("length of payload", len(payload.Result))
 	valid_transactions := []transaction{}
 	writtenNumber, _ := strconv.Atoi(payload.Result[0].Timestamp)
 	// by doing this we add the latest period
@@ -59,10 +64,13 @@ func (Fetcher Fetcher) filterDates(timestamp int, payload api_Payload, currentba
 		startdate: writtenNumber,
 		enddate:   int(presentDay),
 	})
-
 	//starting from the latest transaction and working our way back
 	for i := 0; i < len(payload.Result)-1; i++ {
 		if payload.Result[i].IsError == "0" && i < len(payload.Result)-1 {
+			//	if payload.Result[i].VALUE != "0" {
+			//		//fmt.Println("Value:", payload.Result[i].VALUE)
+			//		//fmt.Println("not zero")
+			//	}
 			//valueint, _ := strconv.Atoi(payload.Result[i].VALUE)
 			// periods are sandwiched with transactions
 			startint, _ := strconv.Atoi(payload.Result[i+1].Timestamp)
@@ -79,17 +87,16 @@ func (Fetcher Fetcher) filterDates(timestamp int, payload api_Payload, currentba
 		//		payload.Result
 
 		// if it's the earliest transaction
-		if payload.Result[i].IsError == "0" && i == len(payload.Result)-1 {
-			endint, _ := strconv.Atoi(payload.Result[len(payload.Result)-1].Timestamp)
-
-			period := period{
-				value:     0,
-				startdate: 0,
-				enddate:   endint,
-			}
-			periods = append(periods, &period)
-			valid_transactions = append(valid_transactions, payload.Result[i])
-		}
+		//	if payload.Result[i].IsError == "0" && i == len(payload.Result)-1 {
+		//		endint, _ := strconv.Atoi(payload.Result[len(payload.Result)-1].Timestamp)
+		//		period := period{
+		//			value:     0,
+		//			startdate: 0,
+		//			enddate:   endint,
+		//		}
+		//		periods = append(periods, &period)
+		//		valid_transactions = append(valid_transactions, payload.Result[i])
+		//	}
 
 	}
 	// 1   2    3    4     5
@@ -98,15 +105,32 @@ func (Fetcher Fetcher) filterDates(timestamp int, payload api_Payload, currentba
 	//	fmt.Println(periods)
 	//	fmt.Println(valid_transactions)
 
-	for i := 1; i < len(valid_transactions); i++ {
+	for i := 0; i < len(valid_transactions); i++ {
+
+		currentPeriod := &periods[i]
+
 		valueint, _ := strconv.Atoi(valid_transactions[i].VALUE)
-		if valid_transactions[i].TO == walletaddress {
-			currentbalance = currentbalance - valueint
+		fmt.Println("Current Balance", (*currentPeriod).value)
+		fmt.Println("ValueInt ", valueint)
+
+		fmt.Println("addresses", strings.ToUpper(valid_transactions[i].FROM), strings.ToUpper(valid_transactions[i].TO), strings.ToUpper(walletaddress))
+		fmt.Println(strings.ToUpper(valid_transactions[i].TO) == strings.ToUpper(walletaddress), strings.ToUpper(valid_transactions[i].FROM) == strings.ToUpper(walletaddress))
+		if strings.ToUpper(valid_transactions[i].TO) == strings.ToUpper(walletaddress) {
+			(*currentPeriod).value = (*currentPeriod).value - valueint
+			fmt.Println("minus", currentbalance-valueint)
 		}
-		if valid_transactions[i].FROM == walletaddress {
-			currentbalance = currentbalance + valueint
+		if strings.ToUpper(valid_transactions[i].FROM) == strings.ToUpper(walletaddress) {
+			(*currentPeriod).value = (*currentPeriod).value + valueint
+			fmt.Println("plus", currentbalance+valueint)
 		}
-		periods[i].value = currentbalance
+		//	currentPerValue = currentbalance
+
+		(*currentPeriod).value = currentbalance
+		periods[i].value = (*currentPeriod).value
+		fmt.Println(periods[i].value)
+
+		fmt.Println(" Mutated Current Balance ", (*currentPeriod).value)
+		fmt.Println("value of current slice element", periods[i].value)
 
 	}
 	//for i2 := range periods {
@@ -119,9 +143,10 @@ func (Fetcher Fetcher) filterDates(timestamp int, payload api_Payload, currentba
 
 	// solution := new(int)
 
-	for i := range periods {
-		if periods[i].startdate < timestamp && periods[i].enddate > timestamp {
-			fmt.Println(periods[i].value)
+	for i := 0; i < len(periods); i++ {
+		fmt.Println("value:", periods[i].value)
+		if periods[i].startdate <= timestamp && periods[i].enddate > timestamp {
+			//	fmt.Println(periods[i].value)
 			return periods[i].value
 			//	return periods[i].value
 		}
@@ -130,20 +155,24 @@ func (Fetcher Fetcher) filterDates(timestamp int, payload api_Payload, currentba
 	return 0
 }
 
-func (Fetcher Fetcher) Get_Eth_At_Date(timestamp int, wallet string) int {
+func (Fetcher *Fetcher) Get_Eth_At_Date(timestamp int, wallet string) int {
 	reqStr := "https://api.etherscan.io/api?module=account&action=balance&address=" + wallet + "&tag=latest&apikey=YourApiKeyToken"
 	resp, _ := http.Get(reqStr)
 	defer resp.Body.Close()
 	content, _ := io.ReadAll(resp.Body)
 	balance := balance{}
 	json.Unmarshal(content, &balance)
-	transactions_payload := Fetcher.Grab_etherium_transactions(wallet, 1)
-	balanceattime := Fetcher.filterDates(timestamp, transactions_payload, balance.Balance, wallet)
+	transactions_payload := Fetcher.Grab_etherium_transactions(wallet, 0)
+	fmt.Println("Balance Json", string(content))
+
+	actualBalanceInt, _ := strconv.Atoi(balance.Balance)
+	fmt.Println("Balance", actualBalanceInt)
+	balanceattime := Fetcher.filterDates(timestamp, transactions_payload, actualBalanceInt, wallet)
 
 	return balanceattime
 }
 
-func (Fetcher Fetcher) Grab_etherium_transactions(wallet string, block int) api_Payload {
+func (Fetcher *Fetcher) Grab_etherium_transactions(wallet string, block int) api_Payload {
 	endblock := strconv.Itoa(block + 100000000000000)
 	block_string := strconv.Itoa(block)
 	inputstr := "https://api.etherscan.io/api?module=account&action=txlistinternal&address=" + wallet + "&startblock=" + block_string + "&endblock=" + endblock + "&page=1&offset=10000&sort=desc&apikey=" + apikey
@@ -155,14 +184,12 @@ func (Fetcher Fetcher) Grab_etherium_transactions(wallet string, block int) api_
 	// }
 	defer resp.Body.Close()
 	content, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(content))
+	//	fmt.Println(string(content))
 	//fmt.Println("success")
 	//fmt.Println("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////")
 	payload := api_Payload{}
-
 	json.Unmarshal(content, &payload)
-
-	//	fmt.Println(payload)
+	fmt.Println(payload)
 
 	//	for _, transaction := range payload.Result {
 	//		//	fmt.Println(transaction)

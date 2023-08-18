@@ -8,11 +8,11 @@ import (
 )
 
 type eth_API_Handler struct {
-	fetchr Fetcher
+	fetchr *Fetcher
 }
 
 type eth_API_HandlerV2 struct {
-	fetchr Fetcher
+	fetchr *Fetcher
 }
 
 type Request struct {
@@ -26,10 +26,11 @@ type BalanceRequest struct {
 }
 
 type BalanceResponse struct {
-	balanceattime int
+	Balanceattime int `json:"balanceattime"`
 }
 
-func (ethHandler eth_API_HandlerV2) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (ethHandler *eth_API_HandlerV2) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("fetching balance at date")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Context-Type", "application/json")
@@ -40,14 +41,20 @@ func (ethHandler eth_API_HandlerV2) ServeHTTP(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		fmt.Print("JSON error", err)
 	}
+	fmt.Println("Address:", request.Address)
+	fmt.Println("Date", request.Date)
 	fetchr := ethHandler.fetchr
 
-	response := fetchr.Get_Eth_At_Date(request.Date, request.Address)
-	reply, _ := json.Marshal(response)
-	w.Write((reply))
+	balanceint := fetchr.Get_Eth_At_Date(request.Date, request.Address)
+	replystruct := BalanceResponse{balanceint}
+	fmt.Println(replystruct)
+	reply, _ := json.Marshal(replystruct)
+	//fmt.Println(reply)
+	w.Write(reply)
 
 }
-func (ethHandler eth_API_Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (ethHandler *eth_API_Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("fetching transactions")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Context-Type", "application/json")
@@ -68,5 +75,6 @@ func (ethHandler eth_API_Handler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	fetchr := ethHandler.fetchr
 	api_Payload := fetchr.Grab_etherium_transactions(request.Address, request.Block)
 	reply, _ := json.Marshal(api_Payload)
+	//fmt.Println(string(reply))
 	w.Write((reply))
 }
