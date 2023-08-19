@@ -10,4 +10,4 @@ Step #2 Open Visual studio Code or Goland and clone from the Github repo, then c
 
 Step #3 Open terminal in your IDE and type "Go Mod tidy" to install missing dependencies
 
-Step #4 Type in "go run ." to run the program.
+Step #4 Type in "go run ." to run the program or if you're in Goland IDE, you can click on the green triangle near the top right part of the screen.
