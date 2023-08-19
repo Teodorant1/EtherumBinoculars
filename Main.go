@@ -7,6 +7,11 @@ import (
 
 func main() {
 
+	b := 10.20
+
+	var a int = int(b)
+
+	fmt.Println(a)
 	//	f := main2()
 	//	fmt.Println(f)
 	//	var pow = []int{1, 2, 4, 8, 16, 32, 64, 128}

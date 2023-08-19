@@ -244,10 +244,10 @@ func (Fetcher *Fetcher) Get_Eth_At_Date(timestamp int, wallet string) int {
 func (Fetcher *Fetcher) Grab_etherium_transactions(wallet string, block int) api_Payload {
 	endblock := strconv.Itoa(block + 100000000000000)
 	block_string := strconv.Itoa(block)
-	inputstr := "https://api.etherscan.io/api?module=account&action=txlistinternal&address=" + wallet + "&startblock=" + block_string + "&endblock=" + endblock + "&page=1&offset=10000&sort=desc&apikey=" + apikey
+	inputstr := "https://api.etherscan.io/api?module=account&action=txlist&address=" + wallet + "&startblock=" + block_string + "&endblock=" + endblock + "&page=1&offset=10000&sort=desc&apikey=" + apikey
 	//	fmt.Println(inputstr)
 	resp, _ := http.Get(inputstr)
-	//resp, err := http.Get("https://api.etherscan.io/api?module=account&action=txlistinternal&address=0x2c1ba59d6f58433fb1eaee7d20b26ed83bda51a3&startblock=0&endblock=100000000000000&offset=10000&sort=desc&apikey=8SYNIAHH11X4UA7SGZI8JHICTTAZPZVJXE")
+	//resp, err := http.Get("https://api.etherscan.io/api?module=account&action=txlist&address=0x2c1ba59d6f58433fb1eaee7d20b26ed83bda51a3&startblock=0&endblock=100000000000000&offset=10000&sort=desc&apikey=8SYNIAHH11X4UA7SGZI8JHICTTAZPZVJXE")
 	// if err != nil {
 	// 	panic(err)
 	// }
