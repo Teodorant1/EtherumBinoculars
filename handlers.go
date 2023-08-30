@@ -40,17 +40,16 @@ func (ethHandler *eth_API_HandlerV2) ServeHTTP(w http.ResponseWriter, r *http.Re
 	err := json.Unmarshal(body1, &request)
 	if err != nil {
 		fmt.Print("JSON error", err)
+	} else {
+		fmt.Println("Address:", request.Address)
+		fmt.Println("Date", request.Date)
+		fetchr := ethHandler.fetchr
+		balanceint := fetchr.Get_Eth_At_Date(request.Date, request.Address)
+		replystruct := BalanceResponse{balanceint}
+		fmt.Println(replystruct)
+		reply, _ := json.Marshal(replystruct)
+		w.Write(reply)
 	}
-	fmt.Println("Address:", request.Address)
-	fmt.Println("Date", request.Date)
-	fetchr := ethHandler.fetchr
-
-	balanceint := fetchr.Get_Eth_At_Date(request.Date, request.Address)
-	replystruct := BalanceResponse{balanceint}
-	fmt.Println(replystruct)
-	reply, _ := json.Marshal(replystruct)
-	//fmt.Println(reply)
-	w.Write(reply)
 
 }
 func (ethHandler *eth_API_Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -63,18 +62,17 @@ func (ethHandler *eth_API_Handler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	var request Request
 
-	//	fmt.Println(string(body1))
-
 	err := json.Unmarshal(body1, &request)
 
 	if err != nil {
 		fmt.Print("JSON error", err)
+	} else {
+		fmt.Println("address be like", request.Address)
+		fmt.Println("block be like", request.Block)
+		fetchr := ethHandler.fetchr
+		api_Payload := fetchr.Grab_etherium_transactions(request.Address, request.Block)
+		reply, _ := json.Marshal(api_Payload)
+		w.Write((reply))
 	}
-	fmt.Println("address be like", request.Address)
-	fmt.Println("block be like", request.Block)
-	fetchr := ethHandler.fetchr
-	api_Payload := fetchr.Grab_etherium_transactions(request.Address, request.Block)
-	reply, _ := json.Marshal(api_Payload)
-	//fmt.Println(string(reply))
-	w.Write((reply))
+
 }

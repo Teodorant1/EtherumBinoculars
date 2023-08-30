@@ -7,14 +7,6 @@ import (
 
 func main() {
 
-	//	f := main2()
-	//	fmt.Println(f)
-	//	var pow = []int{1, 2, 4, 8, 16, 32, 64, 128}
-	//
-	//	for i := 0; i < len(pow)-1; i++ {
-	//		fmt.Println(pow[i])
-	//	}
-
 	fetchr := Fetcher{}
 	coins := fetchr.Get_Eth_At_Date(1688357340, "0x388c818ca8b9251b393131c08a736a67ccb19297")
 	fmt.Println(coins)
@@ -26,5 +18,9 @@ func main() {
 	fmt.Println("fetchr server is online")
 	server.Handle("/gettransactions", fetchhandler)
 	server.Handle("/getbalance", fetchhandler2)
-	http.ListenAndServe(":8001", server)
+	err := http.ListenAndServe(":8001", server)
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		return
+	}
 }
