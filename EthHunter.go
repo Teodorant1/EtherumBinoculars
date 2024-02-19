@@ -42,7 +42,7 @@ type period struct {
 	enddate   int
 }
 
-const apikey = "8SYNIAHH11X4UA7SGZI8JHICTTAZPZVJXE"
+const apikey = ""
 
 type Fetcher struct{}
 
